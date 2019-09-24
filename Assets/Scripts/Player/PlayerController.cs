@@ -25,6 +25,18 @@ public class PlayerController : MonoBehaviour
     [SerializeField]
     [Tooltip("The HUD script")]
     private HUDController m_HUD;
+
+    [SerializeField]
+    [Tooltip("Amount of mana the player starts with")]
+    private int m_Mana;
+
+    [SerializeField]
+    [Tooltip("Amount of Mana Regenerated every TimeToRegen seconds")]
+    private float m_ManaGain;
+
+    [SerializeField]
+    [Tooltip("Time till mana is regenerated")]
+    private int m_TimeToRegen;
     #endregion
 
     #region Cached References
@@ -48,6 +60,18 @@ public class PlayerController : MonoBehaviour
 
     // The current amount of health the player has
     private float p_CurrHealth;
+
+    // The current amount of mana the player has
+    private float p_CurrMana;
+
+    // The amount of mana regenerated per x seconds
+    private float p_ManaRegen;
+
+    //The time to regen a set amount of mana
+    private float p_ManaTimer;
+
+    //Time elapsed to help track ManaTimer;
+    private float p_elaspedtime;
     #endregion
 
     #region Initialization 
@@ -58,7 +82,11 @@ public class PlayerController : MonoBehaviour
         cr_anim = GetComponent<Animator>();
         cr_Renderer = GetComponentInChildren<Renderer>();
         p_DefaultColor = cr_Renderer.material.color;
+        p_elaspedtime = 0;
         p_CurrHealth = m_Health;
+        p_CurrMana = m_Mana;
+        p_ManaRegen = m_ManaGain;
+        p_ManaTimer = m_TimeToRegen;
         p_FrozenTimer = 0;
 
         for (int i = 0; i < m_attacks.Length; i++)
@@ -95,6 +123,18 @@ public class PlayerController : MonoBehaviour
             p_FrozenTimer = 0;
         }
 
+        if (p_ManaTimer > 0)
+        {
+            p_elaspedtime += Time.fixedDeltaTime;
+            p_ManaTimer -= p_elaspedtime;
+        }
+        else
+        {
+            IncreaseMana(p_ManaRegen);
+            p_ManaTimer = m_TimeToRegen;
+            p_elaspedtime = 0;
+        }
+
         //Abiltiy Use
         for (int i = 0; i < m_attacks.Length; i++)
         {
@@ -105,7 +145,19 @@ public class PlayerController : MonoBehaviour
                 if (Input.GetButtonDown(attack.Button))
                 {
                     p_FrozenTimer = attack.FrozenTime;
-                    DecreaseHealth(attack.HealthCost);
+                    if (p_CurrMana >= attack.ManaCost)
+                    {
+                        DecreaseMana(attack.ManaCost);
+                    } else if (p_CurrMana > 0 && p_CurrMana < attack.ManaCost)
+                    {
+                        float rest = attack.ManaCost - p_CurrMana;
+                        DecreaseMana(p_CurrMana);
+                        DecreaseHealth(rest);
+                    }
+                    else
+                    {
+                        DecreaseHealth(attack.HealthCost);
+                    }
                     StartCoroutine(UseAttack(attack));
                     break;
                 }
@@ -166,7 +218,7 @@ public class PlayerController : MonoBehaviour
 
     #endregion
 
-    #region Health/Dying Method
+    #region Health/Dying/Mana Method
 
     private IEnumerator UseAttack(PlayerAttackInfo attack)
     {
@@ -196,6 +248,23 @@ public class PlayerController : MonoBehaviour
         {
             SceneManager.LoadScene("MainMenu");
         }
+    }
+
+    public void DecreaseMana(float amount)
+    {
+        p_CurrMana -= amount;
+        m_HUD.UpdateMana(1.0f * p_CurrMana / m_Mana);
+
+    }
+
+    public void IncreaseMana(float amount)
+    {
+        p_CurrMana += amount;
+        if (p_CurrMana >= m_Mana)
+        {
+            p_CurrMana = m_Mana;
+        }
+        m_HUD.UpdateMana(1.0f * p_CurrMana / m_Mana);
     }
 
     public void IncreaseHealth(int amount)

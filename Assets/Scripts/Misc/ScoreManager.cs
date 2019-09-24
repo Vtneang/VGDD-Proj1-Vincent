@@ -1,10 +1,12 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class ScoreManager : MonoBehaviour
 {
     public static ScoreManager singleton;
+
 
     #region Private Variable
     private int m_CurrScore;
@@ -29,6 +31,7 @@ public class ScoreManager : MonoBehaviour
     public void IncreaseScore(int amount)
     {
         m_CurrScore += amount;
+
     }
 
     private void UpdateHighScore()

@@ -99,6 +99,16 @@ public class PlayerAttackInfo
         }
     }
     [SerializeField]
+    [Tooltip("How much mana this ability costs")]
+    private int m_ManaCost;
+    public int ManaCost
+    {
+        get
+        {
+            return m_ManaCost;
+        }
+    }
+    [SerializeField]
     [Tooltip("The color to change to when using the ability")]
     private Color m_Color;
 
